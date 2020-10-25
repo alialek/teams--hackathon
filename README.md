@@ -1,2 +1,2 @@
 # findfound
-Leaders of Digital hackathon / SKFU case / Frontend
+Весь код в ветке master
