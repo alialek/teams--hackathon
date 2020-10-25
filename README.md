@@ -1,19 +1,23 @@
-# teams
+# FindFound - Frontend
+![cover](http://findfound.me/Thumb.png)
 
-## Project setup
+Здесь лежит фронтенд. Backend можно найти вот по этой [ссылке](https://github.com/maximus1998g/hakaton)
+## Демо:
+Сайт доступен на [findfound](http://findfound.me)
+## Как запустить локально:
+### Установите зависимости командой
 ```
 npm install
 ```
 
-### Compiles and hot-reloads for development
+### Сборка проекта производится командой
+
 ```
 npm run serve
 ```
 
-### Compiles and minifies for production
+### Produnction сборка при помощи команды
 ```
 npm run build
 ```
 
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
