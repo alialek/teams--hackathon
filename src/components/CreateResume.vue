@@ -17,6 +17,7 @@
 							hide-no-data
 							outlined
 							hide-selected
+							@change="search = ''"
 							item-text="text"
 							item-value="id"
 							small-chips
@@ -77,7 +78,7 @@
 							></v-select>
 						</v-col>
 					</v-row>
-					<v-autocomplete
+					<v-combobox
 						ref="autocom"
 						v-model="education.university"
 						:items="universities"
@@ -94,7 +95,7 @@
 						label="Университет"
 						placeholder="Начните вводить название университета"
 						prepend-inner-icon="mdi-domain"
-					></v-autocomplete>
+					></v-combobox>
 					<v-autocomplete
 						v-model="education.specialization"
 						:items="specializations"
@@ -120,7 +121,8 @@
 				>
 				<div :key="i + 'jobs'" v-for="(job, i) in resume.jobs">
 					<v-text-field outlined label="Название компании" v-model="job.name"> </v-text-field>
-					<v-text-field outlined label="Обязанности на работе" v-model="job.duties"> </v-text-field>
+					<v-combobox :delimiters="[',']" outlined label="Обязанности на работе" v-model="job.duties">
+					</v-combobox>
 					<v-row class="pd-unset">
 						<v-col cols="6" style="padding-bottom: unset; padding-top: unset" class="col-md-6">
 							<span class="mb-2 resume__field">Начало</span>
@@ -157,7 +159,7 @@
 					<v-divider class="my-4"></v-divider>
 				</div>
 
-				<v-btn depressed mt-8 @click="save">
+				<v-btn depressed color=primary mt-8 @click="save">
 					Сохранить
 				</v-btn>
 			</v-col>
@@ -166,10 +168,16 @@
 </template>
 
 <script>
-	import { skillset, specializations, universities, forms } from '@/api';
+	import { skillset, specializations, universities, forms, createUserResume } from '@/api';
 
 	export default {
 		name: 'Createresume',
+		props: {
+			activeid: {
+				default: 0,
+				type: Number,
+			},
+		},
 		data() {
 			return {
 				years: [],
@@ -177,10 +185,11 @@
 				specializations: [],
 				entries: [],
 				isLoading: false,
-				isLoading2: false,
 				search: '',
+				isLoading2: false,
+
 				searchUni: '',
-			
+
 				width: 300,
 				search_spec: '',
 				universities: [],
@@ -195,7 +204,7 @@
 					},
 					isActual: false,
 					name: 'Selectel',
-					duties: 'Работа с контр-агентами',
+					duties: ['Работа с контр-агентами'],
 				},
 				educationTmpl: {
 					start: {
@@ -218,7 +227,6 @@
 					achievements: ['Русский медвежонок 2009', 'Кенгуру 210'],
 					jobs: [],
 					educations: [],
-					courses: []
 				},
 			};
 		},
@@ -244,13 +252,35 @@
 			save() {
 				let data = {
 					...this.resume,
+					educations: this.resume.educations.map((j) => {
+						return {
+							started: `${j.start.year}`,
+							ended: j.isActual ? 'Актуальное' : `${j.end.year}`,
+							university: j.university.id,
+							is_extra: j.is_extra,
+							specialization: j.specialization,
+						};
+					}),
 					jobs: this.resume.jobs.map((j) => {
 						return {
 							started: `${j.start.month}.${j.start.year}`,
-							ended: j.isActual ? 'По настоящее время' : `${j.end.month}.${j.end.year}`, name: j.name, duties: j.duties
+							ended: j.isActual ? 'Актуальное' : `${j.end.month}.${j.end.year}`,
+							name: j.name,
+							duties: j.duties,
 						};
 					}),
 				};
+				if (!this.activeid) {
+					forms(data).then((res) => {
+						this.$emit('done');
+						this.$store.commit('processes/SET_SUCCESS', 'Резюме обновлено');
+					});
+				} else {
+					createUserResume(data, this.activeid).then((res) => {
+						this.$emit('done');
+						this.$store.commit('processes/SET_SUCCESS', 'Резюме обновлено');
+					});
+				}
 			},
 		},
 		mounted() {
@@ -265,7 +295,7 @@
 			} catch (err) {}
 			this.resume.educations.push(this.educationTmpl);
 			this.resume.jobs.push(this.jobsTmpl);
-			
+
 			for (let i = 1960; i <= 2020; i++) {
 				this.years.push(i);
 			}

@@ -97,6 +97,12 @@
 								v-model="registration.email"
 								outlined
 							></v-text-field>
+							<v-text-field
+								prepend-inner-icon="mdi-telegram"
+								label="Никнейм в телеграме"
+								v-model="registration.telegram"
+								outlined
+							></v-text-field>
 
 							<v-text-field
 								autocomplete="current-password"
@@ -153,7 +159,7 @@
 				<v-window-item :value="4">
 					<v-card elevation="0" class="auth__card pa-8">
 						<div class="d-row justify-space-between align-baseline">
-							<v-icon class="auth__back-icon" @click="step--">mdi-arrow-left</v-icon>
+							<v-icon class="auth__back-icon" @click="step = 3">mdi-arrow-left</v-icon>
 							<h1 class="text-h4 text-center d-block font-weight-black mb-4">Регистрация</h1>
 							<div></div>
 						</div>
@@ -168,6 +174,7 @@
 									overflowX: false,
 								}"
 								hide-no-data
+								@change="search = ''"
 								hide-selected
 								item-text="name"
 								item-value="id"
@@ -187,6 +194,7 @@
 								}"
 								hide-no-data
 								hide-selected
+									@change="search_spec = ''"
 								:rules="[rules.required]"
 								:item-text="concateText"
 								item-value="id"
@@ -249,7 +257,7 @@
 								outlined
 							></v-text-field>
 							<v-btn
-								:disabled="!isAvailable"
+								
 								color="primary"
 								@click="register"
 								large
@@ -266,7 +274,7 @@
 				<v-window-item :value="5">
 					<v-card elevation="0" class="auth__card pa-8">
 						<div class="d-row justify-space-between align-baseline">
-							<v-icon class="auth__back-icon" @click="step--">mdi-arrow-left</v-icon>
+							<v-icon class="auth__back-icon" @click="step = 3">mdi-arrow-left</v-icon>
 							<h1 class="text-h4 text-center d-block font-weight-black mb-4">Регистрация</h1>
 							<div></div>
 						</div>
@@ -357,6 +365,7 @@
 
 <script>
 	import './Auth.css';
+	import axios from 'axios';
 	import { registration, createCompany, cities, universities, specializations, auth } from '@/api';
 	import TCard from '../atoms/TCard';
 	export default {
@@ -375,12 +384,12 @@
 					logo: '',
 					phone: '+79117653927',
 					inn: '23423423',
-					name: 'ВКонтакте',
+					name: 'Selectel',
 					ogrn: '8273282828724',
 					takes_on_practice: false,
-					address: 'Невский пр.,',
+					address: 'Цветочная ул., д.19',
 					city: '',
-					description: 'Социальная сеть',
+					description: 'Сеть дата-центров',
 				},
 				image: '',
 				roles: [
@@ -414,12 +423,13 @@
 					last_name: 'Алибутаев',
 					degree: '',
 					course: 0,
+					telegram: '',
 					sex: 'MALE',
 					student_id: '',
 					student_id_type: '',
 					email: 'alialek@yandex.ru',
 					university_id: 0,
-					specialization: 0,
+					specialization: 1,
 					date_of_birth: new Date(),
 				},
 				rules: {
@@ -486,7 +496,9 @@
 				auth(this.login)
 					.then((res) => {
 						this.saveCreds(res);
+
 						this.$router.push('/');
+						window.location.reload();
 					})
 					.catch((err) => {
 						this.$store.commit('processes/SET_ERROR', 'Введенные данные неверны');
@@ -497,15 +509,24 @@
 				data.date_of_birth = `${this.registration.date_of_birth.getFullYear()}-${this.registration.date_of_birth.getMonth()}-${this.registration.date_of_birth.getDate()}`;
 				delete data.rePassword;
 				registration(data).then((res) => {
+					localStorage.setItem('user_ff', res.data.token);
 					this.saveCreds(res);
-					createCompany({
-						...this.company,
-						email: this.registration.email,
-						city: this.company.city.id,
-					}).then((res) => {
-						this.$store.commit('processes/SET_SUCCESS', 'Регистрация пройдена!');
-						this.$router.push('/');
-					});
+					axios
+						.post(
+							'https://hr-itmo.herokuapp.com/api/companies/',
+							{ ...this.company, email: this.registration.email, city: this.company.city.id }, // the data to post
+							{
+								headers: {
+									'Content-type': 'application/json',
+									Authorization: `Token ${res.data.token}`,
+								},
+							},
+						)
+						.then((res) => {
+							this.$store.commit('processes/SET_SUCCESS', 'Регистрация пройдена!');
+							this.$router.push('/');
+							window.location.reload();
+						});
 				});
 			},
 			register() {
@@ -516,6 +537,7 @@
 					this.$store.commit('processes/SET_SUCCESS', 'Регистрация пройдена!');
 					this.saveCreds(res);
 					this.$router.push('/');
+					window.location.reload();
 				});
 			},
 			saveCreds(res) {

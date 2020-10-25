@@ -8,10 +8,10 @@
 			</template>
 			<v-list>
 				<v-list-item to="/cabinet">
-					<v-list-item-title >Личный кабинет</v-list-item-title>
+					<v-list-item-title>Личный кабинет</v-list-item-title>
 				</v-list-item>
 				<v-list-item color="error" @click="logout">
-					<v-list-item-title  >Выйти</v-list-item-title>
+					<v-list-item-title>Выйти</v-list-item-title>
 				</v-list-item>
 			</v-list></v-menu
 		>
@@ -37,18 +37,22 @@
 					></v-autocomplete>
 				</v-form>
 			</div>
-			<div class="d-col main__slide">
-				<div class="main__slides d-row">
+			<div style="min-height: 381px" class="d-col main__slide">
+				<div v-if="!loading" style="flex-wrap: nowrap" class="main__slides d-row">
 					<t-card
 						v-for="vacancy in vacancies"
 						:key="vacancy.id"
 						:id="vacancy.id"
-						:title="vacancy.title"
-						:company="vacancy.company"
-						:description="vacancy.description"
-						:logo="vacancy.logo"
+						:title="vacancy.name"
+						:company="vacancy.company_name"
+						:description="vacancy.short_description"
+						:logo="vacancy.company_logo"
+						:skills="vacancy.skills"
 					/>
 				</div>
+				<v-row v-if="loading" class="justify-center">
+					<v-progress-circular indeterminate color="primary"></v-progress-circular>
+				</v-row>
 			</div>
 		</v-col>
 	</div>
@@ -56,6 +60,7 @@
 
 <script>
 	import TCard from '@/atoms/TCard.vue';
+	import { getVacancies } from '../api';
 	export default {
 		name: 'Main',
 		components: { TCard },
@@ -65,20 +70,12 @@
 				items: [],
 				search: null,
 				select: null,
-				states: ['Frontend', 'Backend', 'Маркетинг', 'UX', 'Дизайн', 'Аналитика'],
+				vacancies: [],
 			};
 		},
 		computed: {
-			vacancies() {
-				return this.$store.state.vacancies.random;
-			},
 			token() {
 				return this.$store.state.utils.token;
-			},
-		},
-		watch: {
-			search(val) {
-				val && val !== this.select && this.querySelections(val);
 			},
 		},
 		methods: {
@@ -87,18 +84,30 @@
 				localStorage.removeItem('role_ff');
 				document.location.reload();
 			},
-			querySelections(v) {
-				this.loading = true;
-				// Simulated ajax query
-				setTimeout(() => {
-					this.items = this.states.filter((e) => {
-						return (e || '').toLowerCase().indexOf((v || '').toLowerCase()) > -1;
-					});
+		},
+		mounted() {
+			this.loading = true;
+			getVacancies()
+				.then((res) => {
+					this.vacancies = res.data.slice(0, 3);
+				})
+				.finally(() => {
 					this.loading = false;
-				}, 500);
-			},
+				});
+			this.$store.dispatch('utils/getToken');
+			this.$store.dispatch('utils/getRole');
 		},
 	};
 </script>
 
-<style lang="css"></style>
+<style lang="css">
+	.main__slides {
+		-ms-overflow-style: none; /* Internet Explorer 10+ */
+		scrollbar-width: none; /* Firefox */
+		overflow-x: scroll;
+		padding-top: 20px;
+	}
+	.main__slides::-webkit-scrollbar {
+		display: none; /* Safari and Chrome */
+	}
+</style>

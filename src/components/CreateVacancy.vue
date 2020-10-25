@@ -1,7 +1,6 @@
 <template>
 	<div class="d-row justify-center">
 		<div class="mt-4">
-			<h1 class="text-h4 text-center font-weight-bold">Создать вакансию</h1>
 			<v-col style="max-width:900px">
 				<span class="mb-2 vacancy__field">Заголовок вакансии</span>
 				<v-text-field outlined style="font-size: 26px" v-model="vacancy.name" placeholder="Заголовок" />
@@ -55,10 +54,7 @@
 						placeholder="Зарплата"
 					/>
 				</v-col>
-				<span class="mb-2 resume__field"
-					>Рекомендуемые онлайн-курсы
-					<v-icon @click="vacancy.courses.push(coursesTmpl)">mdi-plus</v-icon></span
-				>
+				<span class="mb-2 resume__field">Рекомендуемые онлайн-курсы </span>
 				<div class="d-row" :key="i + 'course'" v-for="(course, i) in vacancy.courses">
 					<v-text-field label="Название курса" v-model="course.name" outlined></v-text-field>
 					<v-text-field label="Ссылка" v-model="course.link" outlined></v-text-field>
@@ -87,6 +83,7 @@
 					:search-input.sync="search"
 					hide-no-data
 					outlined
+					@change="search = ''"
 					hide-selected
 					item-text="text"
 					item-value="id"
@@ -101,7 +98,7 @@
 				<div class="editorx_body">
 					<div class id="codex-editor" />
 				</div>
-				<v-btn depressed mt-8 @click="save">
+				<v-btn color="primary" class="mt-8" large block elevation="0" full-width mt-8 @click="save">
 					Сохранить
 				</v-btn>
 			</v-col>
@@ -118,6 +115,12 @@
 
 	export default {
 		name: 'CreateVacancy',
+		props: {
+			activeid: {
+				default: 0,
+				type: Number,
+			},
+		},
 		data() {
 			return {
 				specializations: [],
@@ -233,9 +236,19 @@
 						employment_type: this.vacancy.employment_type.id,
 						specializations: this.vacancy.specializations.map((s) => s.id),
 					};
-					postVacancy(data).then((res) => {
-						console.log(res.data);
-					});
+					if (!this.activeid) {
+						postVacancy(data).then((res) => {
+							console.log(res.data);
+							this.$emit('done');
+							this.$store.commit('processes/SET_SUCCESS', 'Вакансия создана');
+						});
+					} else {
+						postVacancy(data, this.activeid).then((res) => {
+							console.log(res.data);
+							this.$emit('done');
+							this.$store.commit('processes/SET_SUCCESS', 'Вакансия создана');
+						});
+					}
 				});
 			},
 			myEditor() {

@@ -19,12 +19,12 @@
 				</v-icon>
 				Отклики
 			</v-tab>
-			<v-tab>
+			<!-- <v-tab>
 				<v-icon left>
 					mdi-heart
 				</v-icon>
 				Компании
-			</v-tab>
+			</v-tab> -->
 			<v-tab-item>
 				<div class="mt-8">
 					<v-autocomplete
@@ -85,27 +85,61 @@
 					</div>
 				</div>
 			</v-tab-item>
-			<v-tab-item><create-resume /> </v-tab-item>
 			<v-tab-item>
-				<v-row style="margin-top: 24px">
-					<t-card
+				<v-row>
+					<v-col cols="8">
+						<div v-if="user.form !== {}">
+							<resume-viewer :resume="user.form" />
+						</div>
+					</v-col>
+					<v-col cols="4">
+						<div @click="dialog = true">
+							<ActionCard
+								title="Создать резюме"
+								:desc="
+									user.form == {}
+										? 'Нажмите на карточку, чтобы открыть форму'
+										: 'Новое резюме перезапишет актуальную версию'
+								"
+							/></div
+					></v-col>
+				</v-row>
+			</v-tab-item>
+			<v-tab-item>
+				<v-row style="margin-top: 24px" class="justify-space-around">
+					<div
+					
 						v-for="vacancy in responses"
-						:key="vacancy.id"
-						:id="vacancy.id"
-						:title="vacancy.title"
-						:company="vacancy.company"
-						:description="vacancy.description"
-						:logo="vacancy.logo"
-					/>
+						:key="vacancy.vacancy_id"
+						@click="$router.push(`vacancy?id=${vacancy.vacancy_id}`)"
+					>
+						<t-card
+							:id="vacancy.vacancy_id"
+							:title="vacancy.vacancy_name"
+							:seen="vacancy.response_seen"
+							:decision="vacancy.response_decision"
+							:company="vacancy.company_name"
+							:company_id="vacancy.company_id"
+							:description="vacancy.vacancy_short_description"
+							:logo="vacancy.company_logo"
+						/>
+					</div>
 				</v-row>
 			</v-tab-item>
 			<v-tab-item>Сохраненные</v-tab-item>
 		</v-tabs>
+		<v-dialog max-width="600px" v-model="dialog">
+			<v-card>
+				<create-resume @done="(dialog = false), $emit('refresh')" />
+			</v-card>
+		</v-dialog>
 	</div>
 </template>
 
 <script>
 	import CreateResume from './CreateResume';
+	import ResumeViewer from './ResumeViewer';
+	import ActionCard from '@/atoms/ActionCard.vue';
 	import { registration, createCompany, cities, universities, specializations, auth, getResponses } from '@/api';
 
 	import TCard from '@/atoms/TCard.vue';
@@ -114,9 +148,12 @@
 		components: {
 			CreateResume,
 			TCard,
+			ActionCard,
+			ResumeViewer,
 		},
 		data() {
 			return {
+				dialog: false,
 				degrees: [
 					{
 						id: 'BACHELOR',
@@ -131,12 +168,12 @@
 				],
 				search: '',
 				disabled: true,
-				responses: []
+				responses: [],
 			};
 		},
 		computed: {
 			availableCourses() {
-				return this.degrees.filter((d) => this.user.degree === d.id)[0].courses;
+				return this.degrees && this.degrees.filter((d) => this.user.degree === d.id)[0].courses;
 			},
 		},
 		props: {
@@ -153,7 +190,7 @@
 
 				this.specializations = values[1].data;
 				this.cities = values[2].data;
-				this.responses = values[3].data
+				this.responses = values[3].data;
 			});
 		},
 	};

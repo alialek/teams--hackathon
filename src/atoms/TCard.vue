@@ -23,9 +23,29 @@
 						</p>
 					</div>
 				</router-link>
-				<v-row >
-					<div :key="skill.id"  v-for="skill in skills" class="mr-2 ml-2 custom-chip">
+				<v-row v-if="skills.length > 0">
+					<div :key="skill.id" v-for="skill in skills" class="mr-2 ml-2 custom-chip">
 						{{ skill.text }}
+					</div>
+				</v-row>
+				<v-row v-if="skills.length === 0">
+					<div v-if="decision === 'NO_ANSWER'" class="mr-2 ml-2 custom-chip">
+						Не просмотрено
+					</div>
+					<div class="mr-2 ml-2">
+						<v-chip color="success" outlined v-if="decision === 'ACCEPT'">
+							<v-icon left>
+								mdi-check
+							</v-icon>
+							Вас пригласили
+						</v-chip>
+						<v-chip color="error" outlined v-if="decision === 'DECLINE'">
+							<v-icon left>
+								mdi-close
+							</v-icon>
+							Отказ
+						</v-chip>
+						
 					</div>
 				</v-row>
 			</v-col>
@@ -40,20 +60,30 @@
 			logo: String,
 			link: String,
 			title: String,
-			company: Object,
+			company: String,
+			company_id: String,
 			tags: Array,
 			description: String,
 			id: Number,
-			skills: Array,
-			verified: {
-				default: false,
-				type: Boolean,
+			status: Boolean,
+			decision: {
+				type: String,
 			},
+			seen: {
+				default: '',
+			},
+			skills: {
+				type: Array,
+				default: () => [],
+			},
+			verified: Boolean,
+
 			external: {
 				default: false,
 			},
 		},
 		name: 'TCard',
+		mounted() {},
 	};
 </script>
 <style lang="css">
@@ -101,8 +131,8 @@
 		height: fit-content;
 		white-space: nowrap;
 
-    overflow: hidden;
-    width: fit-content;
-    margin-top: 8px;
+		overflow: hidden;
+		width: fit-content;
+		margin-top: 8px;
 	}
 </style>

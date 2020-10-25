@@ -5,7 +5,7 @@
 				<v-icon left>
 					mdi-account
 				</v-icon>
-				Все вакансии
+				Вакансии и отклики
 			</v-tab>
 			<v-tab>
 				<v-icon left>
@@ -14,32 +14,59 @@
 				Создать вакансию
 			</v-tab>
 			<v-tab-item>
-				<v-expansion-panels style="margin-top: 16px;" flat elevation="0">
-					<v-expansion-panel flat elevation="0" v-for="(vacancy, i) in vacancies" :key="i">
+				<v-expansion-panels v-if="vacancies.length > 0" style="margin-top: 16px;" flat elevation="0">
+					<v-expansion-panel flat elevation="0" v-for="(vacancy, i) in responses" :key="i">
 						<v-expansion-panel-header elevation="0">
 							{{ vacancy.name }}
 						</v-expansion-panel-header>
 						<v-expansion-panel-content>
-							<span class="caption">Описание: {{ vacancy.short_description }} <br><router-link class="caption" :to="`vacancy?id=${vacancy.id}`"
-								>Ссылка на вакансию</router-link
-							></span>
-							
+							<span class="caption"
+								>Описание: {{ vacancy.short_description }} <br /><router-link
+									class="caption"
+									:to="`vacancy?id=${vacancy.id}`"
+									>Ссылка на вакансию</router-link
+								></span
+							>
+
 							<v-list subheader>
-								<div v-if="vacancy.responses">
-									<v-subheader>Отклики</v-subheader>
+								<div v-if="responses">
+									Отклики
 
-									<v-list-item v-for="response in vacancy.responses" :key="response">
-										<v-list-item-avatar>
-											<v-icon>mdi-account</v-icon>
-										</v-list-item-avatar>
+									<v-list-item
+										dense
+										v-for="response in vacancy.responses"
+										:key="response.response_id"
+									>
+										<v-row
+											style="cursor: pointer;"
+											@click="$router.push(`/profile?id=${response.student_id}`)"
+										>
+											<v-list-item-avatar>
+												<v-icon>mdi-account</v-icon>
+											</v-list-item-avatar>
 
-										<v-list-item-content>
-											<v-list-item-title>Иван Иванов</v-list-item-title>
-										</v-list-item-content>
+											<v-list-item-content>
+												<v-list-item-title>{{ response.student_name }}</v-list-item-title>
+											</v-list-item-content>
+										</v-row>
 
 										<v-list-item-icon>
-											<v-btn>
+											<v-btn
+												depressed
+												small
+												class="mr-2"
+												@click="sendDecision(response.response_id, 'ACCEPT', '')"
+												color="primary"
+											>
 												Пригласить
+											</v-btn>
+											<v-btn
+												depressed
+												small
+												@click="sendDecision(response.response_id, 'DECLINE', '')"
+												color="error"
+											>
+												Отклонить
 											</v-btn>
 										</v-list-item-icon>
 									</v-list-item>
@@ -51,36 +78,49 @@
 						</v-expansion-panel-content>
 					</v-expansion-panel>
 				</v-expansion-panels>
-				<v-row style="margin-top: 24px">
-					<t-card
-						v-for="vacancy in vacancies"
-						:key="vacancy.id"
-						:id="vacancy.id"
-						:title="vacancy.name"
-						:company="vacancy.company.name"
-						:company_id="vacancy.company.id"
-						:description="vacancy.short_description"
-						:logo="vacancy.company.logo"
-						:verified="true"
-						:skills="vacancy.skills"
-					/>
+				<v-row v-else class="justify-center">
+					<v-col class="align-center">
+						<v-icon style="font-size: 40px;">mdi-alert-circle-outline</v-icon>
+						<div>Вакансии отсутствуют</div>
+					</v-col>
 				</v-row>
 			</v-tab-item>
-			<v-tab-item><create-vacancy /> </v-tab-item>
+			<v-tab-item>
+				<div @click="dialog = true">
+					<ActionCard
+						@done="(dialog = false), $emit('refresh')"
+						title="Создать вакансию"
+						desc="Нажмите на карточку, чтобы открыть форму"
+					/>
+				</div>
+			</v-tab-item>
 		</v-tabs>
+		<v-dialog max-width="600px" v-model="dialog">
+			<v-card>
+				<create-vacancy />
+			</v-card>
+		</v-dialog>
 	</div>
 </template>
 
 <script>
 	import CreateVacancy from './CreateVacancy';
 	import TCard from '@/atoms/TCard.vue';
-	import { vacancies } from '../api';
+	import ActionCard from '@/atoms/ActionCard.vue';
+	import { vacancies, getResponses, putDecisionOnResponse } from '../api';
 
 	export default {
 		name: 'Employer',
 		components: {
 			CreateVacancy,
 			TCard,
+			ActionCard,
+		},
+		data() {
+			return {
+				dialog: false,
+				responses: [],
+			};
 		},
 		props: {
 			user: {
@@ -92,7 +132,21 @@
 				return this.$store.state.vacancies.vacancies;
 			},
 		},
+		methods: {
+			sendDecision(id, decision, comment) {
+				console.log(id, decision, comment);
+				putDecisionOnResponse(id, { decision, comment }).then((res) => {
+					this.$commit(
+						'processes/SET_SUCCESS',
+						decision === 'ACCEPT' ? 'Приглашение отправлено' : 'Пользователю отправлен отказ',
+					);
+				});
+			},
+		},
 		mounted() {
+			getResponses().then((res) => {
+				this.responses = res.data;
+			});
 			vacancies().then((res) => {
 				this.$store.commit('vacancies/setVacancies', res.data);
 			});

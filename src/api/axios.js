@@ -1,7 +1,7 @@
 import axios from 'axios';
 import store from '@/store';
 import config from './config';
-
+import qs from 'qs'
 class Service {
 	constructor() {
 		let service = axios.create({
@@ -10,12 +10,15 @@ class Service {
 			headers: {
 				'Content-Type': 'application/json',
 			},
+			paramsSerializer: params => {
+				return qs.stringify(params)
+			  }
 		});
 
 		localStorage.getItem('user_ff') || null
 			? (service.defaults.headers.common['Authorization'] = `Token ${localStorage.getItem('user_ff')}`)
 			: delete service.defaults.headers.common['Authorization'];
-		
+
 		service.interceptors.response.use(this.handleSuccess, (error) => this.handleError(error));
 		this.service = service;
 	}

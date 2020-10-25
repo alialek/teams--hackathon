@@ -3,7 +3,7 @@
 		<v-row v-if="!isLoading" class="vacancy">
 			<v-col class="cols-12 px-10 cols-md-6">
 				<h1 class="vacancy__title" style="margin-top: 100px;">{{ vacancy.name }}</h1>
-				<div style="margin-top: 8px" class="d-row pd-unset align-center">
+				<div style="cursor:pointer;margin-top: 8px" @click="$router.push(`company?id=${vacancy.company.id}`)" class="d-row pd-unset align-center">
 					<div
 						:style="
 							`height: 48px; width: 48px;background-size: contain; margin-right: 16px;background-image: url(${vacancy.company.logo})`
@@ -19,7 +19,8 @@
 				<v-divider style="margin-top: 48px;"></v-divider>
 				<div class="d-row align-center" style="margin-top: 24px;">
 					<v-btn @click="response" depressed color="primary" rounded>Откликнуться</v-btn
-					><v-btn depressed fab color="primary" class="ml-4" small><v-icon>mdi-heart-outline</v-icon></v-btn>
+					>
+					<!-- <v-btn depressed fab color="primary" class="ml-4" small><v-icon>mdi-heart-outline</v-icon></v-btn> -->
 				</div>
 			</v-col>
 			<v-col class="cols-12 px-10 cols-md-6">
@@ -42,18 +43,18 @@
 				<span class="vacancy__field">Условия:</span>
 				<div class="d-col" style="margin-top: 24px;">
 					<div style="margin-top: 8px; width: fit-content" class="team-card__external">
-						Опыт: {{ vacancy.experience_type.text }}
+						Опыт: {{ vacancy.employment_type.text  }}
 					</div>
 					<div style="margin-top: 8px; width: fit-content" class="team-card__external">
 						График: {{ vacancy.schedule_type.text }}
 					</div>
 					<div style="margin-top: 8px; width: fit-content" class="team-card__external">
-						Занятость: {{ vacancy.employment_type.text }}
+						Занятость: {{  vacancy.experience_type.text}}
 					</div>
 				</div>
 				<v-divider style="margin: 32px 0px"></v-divider>
 				<span style="margin-top: 0px" class="vacancy__field">Контакты:</span>
-				<span style="margin-top: 16px" class="font-weight-bold"
+				<span v-if="vacancy.company.phone" style="margin-top: 16px" class="font-weight-bold"
 					><v-icon style="margin-right: 8px;">mdi-phone</v-icon>{{ vacancy.company.phone }}</span
 				>
 				<span style="margin-top: 16px" class="font-weight-bold"
@@ -61,9 +62,9 @@
 				>
 			</v-col>
 		</v-row>
-		<div v-else>
-			<v-progress-circular></v-progress-circular>
-		</div>
+		<v-row v-else class="justify-center mt-8" >
+			<v-progress-circular indeterminate color=primary></v-progress-circular>
+		</v-row>
 	</div>
 </template>
 

@@ -28,7 +28,7 @@ const errorHandler = (err) => {
 				error = 'Упс, что-то не найдено';
 				break;
 			default:
-				error = 'Ошибка 500';
+				error = 'Ошибка';
 				
 				break;
 		}

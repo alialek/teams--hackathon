@@ -46,8 +46,8 @@ const routes = [
 		props: (route) => ({ text: route.query.text }),
 	},
 	{
-		path: '/user',
-		name: 'Поиск',
+		path: '/profile',
+		name: 'Пользователь',
 		component: User,
 		props: (route) => ({ id: route.query.id }),
 	},

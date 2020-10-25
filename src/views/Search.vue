@@ -3,13 +3,13 @@
 		<v-col styclass="main pd-unset justify-space-evenly ">
 			<div style="margin-top: 48px; width: 90%;" class=" mx-auto main__search d-col pd-unset">
 				<v-text-field
-					v-model="select"
+					v-model="searchField.search"
 					style="width: 100%"
-					:search-input.sync="searchField.search"
 					cache-items
 					class=" searchField"
 					full-width
 					flat
+					@input="sendRequest"
 					rounded
 					append-icon="mdi-magnify"
 					hide-no-data
@@ -18,6 +18,24 @@
 					outlined
 				></v-text-field>
 				<v-row>
+					<v-col cols="3">
+						<v-combobox
+							v-model="searchField.skills"
+							:items="entries"
+							:loading="isLoading"
+							:search-input.sync="searchSkill"
+							hide-no-data
+							outlined
+							rounded
+							hide-selected
+							item-text="text"
+							item-value="id"
+							small-chips
+							placeholder="Навыки"
+							prepend-inner-icon="mdi-database-search"
+							return-object
+						></v-combobox>
+					</v-col>
 					<v-col cols="3"
 						><v-select
 							small-chips
@@ -25,7 +43,7 @@
 							outlined
 							item-text="name"
 							item-value="id"
-							v-model="search.employment_type"
+							v-model="searchField.employment_type"
 							:items="employment_types"
 							placeholder="Тип занятости"
 						>
@@ -38,7 +56,7 @@
 							item-value="id"
 							rounded
 							outlined
-							v-model="search.experience_type"
+							v-model="searchField.experience_type"
 							:items="experience_types"
 							placeholder="Опыт"
 						>
@@ -51,7 +69,7 @@
 							item-value="id"
 							rounded
 							outlined
-							v-model="search.schedule_type"
+							v-model="searchField.schedule_type"
 							:items="schedule_types"
 							placeholder="Режим работы"
 						>
@@ -61,17 +79,31 @@
 			</div>
 
 			<div class="d-col main__slide">
-				<div class="main__slides d-row">
+				<div v-if="!loading && vacancies.length" class="main__slides d-row justify-space-around">
 					<t-card
 						v-for="vacancy in vacancies"
 						:key="vacancy.id"
 						:id="vacancy.id"
-						:title="vacancy.title"
-						:company="vacancy.company"
-						:description="vacancy.description"
-						:logo="vacancy.logo"
+						:title="vacancy.name"
+						:company_id="vacancy.company_id"
+						:company="vacancy.company_name"
+						:description="vacancy.short_description"
+						:logo="vacancy.company_logo"
+						:skills="vacancy.skills"
 					/>
 				</div>
+				<v-row v-if="loading" class="justify-center">
+					<v-progress-circular indeterminate color="primary"></v-progress-circular>
+				</v-row>
+				<v-row v-if="!loading && vacancies.length === 0" class="justify-center align-center">
+					<v-card elevation="0">
+						<v-col style="text-align:center">
+							<v-icon style="font-size: 60px; margin-top: 40px;">mdi-note-search-outline</v-icon>
+							Какие-то сложные запросы у вас. <br />
+							Попробуйте смягчить фильтры поиска.
+						</v-col>
+					</v-card>
+				</v-row>
 			</div>
 		</v-col>
 	</div>
@@ -79,16 +111,20 @@
 
 <script>
 	import TCard from '@/atoms/TCard.vue';
+	import { skillset, vacancies } from '../api';
 	export default {
 		name: 'Main',
 		components: { TCard },
 		props: {
-			search: {
+			text: {
 				default: '',
 			},
 		},
 		data() {
 			return {
+				entries: [],
+				isLoading: false,
+				searchSkill: '',
 				experience_types: [
 					{
 						id: 1,
@@ -146,37 +182,70 @@
 					experience_type: '',
 					schedule_type: '',
 					employment_type: '',
+					skills: null,
 				},
 				select: null,
-				states: ['Frontend', 'Backend', 'Маркетинг', 'UX', 'Дизайн', 'Аналитика'],
+				vacancies: [],
 			};
 		},
 		computed: {
-			vacancies() {
-				return this.$store.state.vacancies.random;
-			},
 			token() {
 				return this.$store.state.utils.token;
 			},
 		},
 		watch: {
-			search(val) {
-				val && val !== this.select && this.querySelections(val);
+			'searchField.skills'(val) {
+				this.sendRequest();
+			},
+			'searchField.experience_type'(val) {
+				this.sendRequest();
+			},
+			'searchField.search'(val) {
+				if (val.length) this.sendRequest();
+			},
+			searchSkill(val) {
+				if (val?.length < 2 || this.isLoading) return;
+
+				this.isLoading = true;
+
+				skillset({ text: val })
+					.then((res) => {
+						this.entries = res.data.items;
+					})
+					.catch((err) => {
+						console.log(err);
+					})
+					.finally(() => (this.isLoading = false));
 			},
 		},
 		mounted() {
-			this.searchField.search = this.search;
+			
+			if(this.text) {
+				this.searchField.search = this.text;
+				
+			}
 		},
 		methods: {
-			querySelections(v) {
+			sendRequest() {
+		
+				let data = {
+					text: this.searchField.search,
+				};
+
+				if(this.searchField.skills !== null) data.skill = this.searchField.skills.id;
+				if(this.searchField.experience_type) data.experience_type = this.searchField.experience_type;
+				
+				this.getVacancies(data);
+			},
+			getVacancies(data) {
+				console.log('sds')
 				this.loading = true;
-				// Simulated ajax query
-				setTimeout(() => {
-					this.items = this.states.filter((e) => {
-						return (e || '').toLowerCase().indexOf((v || '').toLowerCase()) > -1;
-					});
-					this.loading = false;
-				}, 500);
+				vacancies(data)
+					.then((res) => {
+						this.vacancies = res.data;
+						this.loading = false
+					})
+					.finally(() => (this.loading = false));
 			},
 		},
 	};

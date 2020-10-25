@@ -8,7 +8,7 @@
 			>
 			<div>{{ user.description }}</div>
 		</div>
-		<div v-if="role === 'ADMIN'" style="margin-top: 72px;">
+		<div v-if="role === 'ADMINISTRATOR'" style="margin-top: 72px;">
 			<div style="height: 96px; width: 96px; background-size: contain;background-image: url(https://upload.wikimedia.org/wikipedia/ru/2/2e/%D0%9B%D0%BE%D0%B3%D0%BE%D1%82%D0%B8%D0%BF_%D0%A1%D0%9A%D0%A4%D0%A3.png)"></div>
 			<h1 class="vacancy__title" style="margin-top: 24px;">Центр карьеры</h1>
 			<v-icon v-if="user.is_confirmed && role === 'EMPLOYER'" class="ml-2" style="font-size: 20px;"
@@ -23,7 +23,7 @@
 			<v-icon v-if=" role === 'EMPLOYER'" class="ml-2" style="font-size: 20px;"
 				>mdi-check-circle</v-icon
 			>
-			<div>{{ user.is_confirmed ? 'Аккаунт подтвержден' : 'Неподтвержденный аккаунт' }}</div>
+			<div>{{ user.is_confirmed ? 'Аккаунт подтвержден' : 'Студент' }}</div>
 			</div>
 			<div v-else>   <v-progress-circular
       :size="50"
@@ -33,9 +33,9 @@
 		</div>
 
 		<div>
-			<career-centre :user="user" v-if="role === 'ADMIN'" />
-			<student :user="user" v-if="role === 'STUDENT'" />
-			<employer :user="user" v-if="role === 'EMPLOYER'" />
+			<career-centre @refresh=getInfo :user="user" v-if="role === 'ADMINISTRATOR'" />
+			<student  @refresh=getInfo :user="user" v-if="role === 'STUDENT'" />
+			<employer @refresh=getInfo :user="user" v-if="role === 'EMPLOYER'" />
 		</div>
 	</div>
 </template>
@@ -63,10 +63,15 @@
 				return this.$store.state.user.info;
 			},
 		},
-		mounted() {
-			getUserInfo().then((res) => {
+		methods: {
+			getInfo() {
+getUserInfo().then((res) => {
 				this.$store.commit('user/setUser', res.data);
 			});
+			}
+		},
+		mounted() {
+			if(this.role !== 'ADMINISTRATOR') this.getInfo()
 		},
 	};
 </script>
