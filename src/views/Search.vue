@@ -90,6 +90,8 @@
 						:description="vacancy.short_description"
 						:logo="vacancy.company_logo"
 						:skills="vacancy.skills"
+						:external="vacancy.external"
+						:link="vacancy.link"
 					/>
 				</div>
 				<v-row v-if="loading" class="justify-center">
@@ -219,31 +221,28 @@
 			},
 		},
 		mounted() {
-			
-			if(this.text) {
+			if (this.text) {
 				this.searchField.search = this.text;
-				
 			}
 		},
 		methods: {
 			sendRequest() {
-		
 				let data = {
 					text: this.searchField.search,
 				};
 
-				if(this.searchField.skills !== null) data.skill = this.searchField.skills.id;
-				if(this.searchField.experience_type) data.experience_type = this.searchField.experience_type;
-				
+				if (this.searchField.skills !== null) data.skill = this.searchField.skills.id;
+				if (this.searchField.experience_type) data.experience_type = this.searchField.experience_type;
+
 				this.getVacancies(data);
 			},
 			getVacancies(data) {
-				console.log('sds')
+				console.log('sds');
 				this.loading = true;
 				vacancies(data)
 					.then((res) => {
 						this.vacancies = res.data;
-						this.loading = false
+						this.loading = false;
 					})
 					.finally(() => (this.loading = false));
 			},

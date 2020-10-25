@@ -4,9 +4,9 @@
 			<v-col class="squared__col pd-unset justify-space-around">
 				<div class="justify-space-between d-row team-card__info">
 					<div class="team-card__logo" :style="{ backgroundImage: `url(${logo})` }"></div>
-					<div v-if="external" class="team-card__external">hh.ru</div>
+					<div v-if="external" class="team-card__external">superjob</div>
 				</div>
-				<div>
+				<div v-if="!external">
 					<router-link :to="`/vacancy?id=${id}`">
 						<h4 class="team-card__title">{{ title }}</h4></router-link
 					>
@@ -16,13 +16,28 @@
 						</p></router-link
 					>
 				</div>
-				<router-link :to="`/vacancy?id=${id}`">
+				<a target="_blank"  v-if="external" :href="link">
+
+					<h4 class="team-card__title">{{ title }}</h4>
+
+					<p class="team-card__company">
+						{{ company }} <v-icon v-if="verified" style="font-size: 20px;">mdi-check-circle</v-icon>
+					</p>
+				</a>
+				<router-link v-if="!external" :to="`/vacancy?id=${id}`">
 					<div>
 						<p class="team-card__caption">
 							{{ description }}
 						</p>
 					</div>
 				</router-link>
+				<a target="_blank"  v-if="external" :href="link">
+					<div>
+						<p class="team-card__caption">
+							{{ description }}
+						</p>
+					</div>
+				</a>
 				<v-row v-if="skills.length > 0">
 					<div :key="skill.id" v-for="skill in skills" class="mr-2 ml-2 custom-chip">
 						{{ skill.text }}
@@ -45,7 +60,6 @@
 							</v-icon>
 							Отказ
 						</v-chip>
-						
 					</div>
 				</v-row>
 			</v-col>
@@ -67,6 +81,9 @@
 			id: Number,
 			status: Boolean,
 			decision: {
+				type: String,
+			},
+			link: {
 				type: String,
 			},
 			seen: {

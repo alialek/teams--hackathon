@@ -51,7 +51,7 @@
 }
 
 .logo-font {
-	font-family: 'Gilroy' !important;
+	font-family: 'Gilroy', sans-serif !important;
 	line-height: 3.75rem;
 	font-size: 3.75rem !important;
 	letter-spacing: -0.0083333333em !important;
